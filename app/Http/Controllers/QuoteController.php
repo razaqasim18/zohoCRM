@@ -13,6 +13,7 @@ use App\Models\Tax;
 use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class QuoteController extends Controller
 {
@@ -26,14 +27,14 @@ class QuoteController extends Controller
 
     public function add()
     {
-        $customer = Customer::where('business_id', Auth::user()->business->id)->get();
-        $salesperson = SalesPerson::where('business_id', Auth::user()->business->id)->get();
+        // $customer = Customer::where('business_id', Auth::user()->business->id)->get();
+        // $salesperson = SalesPerson::where('business_id', Auth::user()->business->id)->get();
         $item = Item::where('business_id', Auth::user()->business->id)->get();
         $tax = Tax::where('business_id', Auth::user()->business->id)->get();
 
         return view('user.quote.add', [
-            'customer' => $customer,
-            'salesperson' => $salesperson,
+            // 'customer' => $customer,
+            // 'salesperson' => $salesperson,
             'item' => $item,
             'tax' => $tax,
         ]);
@@ -49,7 +50,7 @@ class QuoteController extends Controller
         $output .= "<td><input type='hidden' id='items_id' class='items_id' name='items_id[]' value='" . $item->id . "' /><input type='text' id='item_name' class='form-control item_name' value='" . $item->name . "' readonly/></td>";
         $output .= "<td><input type='number' id='quantity' class='form-control quantity' name='quantity[]' value='1' min='1' required/></td>";
         $output .= "<td><input type='number' id='rate' class='form-control rate' name='rate[]' min='1' value='" . $item->selling_price . "' required/></td>";
-        $output .= '<td><select id="tax" name="tax[]" class="form-control select2">';
+        $output .= '<td><select id="tax" name="tax[]" class="form-control tax select2">';
         foreach ($tax as $row) {
             $output .= "<option>Choose</option>";
             $output .= "<option value='" . $row->id . "'";
@@ -304,31 +305,19 @@ class QuoteController extends Controller
 
     public function insertCustomer(Request $request)
     {
-        $error = '';
-        $salutation_id = $request->salutation;
-        $first_name = $request->first_name;
-        $last_name = $request->last_name;
-        $email = $request->email;
-        $display_name = $request->display_name;
-
-        if (empty($salutation_id)) {
-            $error .= "Salutation is required" . "<br>";
-        }
-        if (empty($first_name)) {
-            $error .= "First name is required" . "<br>";
-        }
-        if (empty($last_name)) {
-            $error .= "Last name is required" . "<br>";
-        }
-        if (empty($email)) {
-            $error .= "Email is required" . "<br>";
-        }
-        if (empty($display_name)) {
-            $error .= "Display name is required" . "<br>";
-        }
-
-        if (!empty($error)) {
-            return response()->json(['type' => 0, 'msg' => $error]);
+        $validator = Validator::make($request->all(), [
+            'salutation' => 'required',
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'email' => 'required|email|unique:customers',
+            'display_name' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'type' => 0,
+                'validator_error' => 1,
+                'errors' => $validator->errors(),
+            ]);
         }
         DB::beginTransaction();
         $customer = Customer::create([
@@ -388,9 +377,61 @@ class QuoteController extends Controller
 
         if ($customer && $customerDetail && $billingaddress && $shippingaddress) {
             DB::commit();
-            return response()->json(['type' => 1, 'data' => Customer::select('id', 'first_name AS text')->get()]);
+            return response()->json(['type' => 1, 'data' => Customer::select('id', 'first_name AS text')->where("business_id", Auth::guard('web')->user()->business->id)->get()]);
         } else {
             DB::rollback();
+            return response()->json(['type' => 0, 'msg' => 'Something went wrong']);
+        }
+    }
+
+    public function insertSaleperson(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'email' => 'required|email|unique:sales_people',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'type' => 0,
+                'validator_error' => 1,
+                'errors' => $validator->errors(),
+            ]);
+        }
+
+        $saleperson = new SalesPerson;
+        $saleperson->business_id = Auth::guard('web')->user()->business->id;
+        $saleperson->name = $request->name;
+        $saleperson->email = $request->email;
+
+        if ($saleperson->save()) {
+            return response()->json(['type' => 1, 'data' => SalesPerson::select('id', 'name AS text')->where("business_id", Auth::guard('web')->user()->business->id)->get()]);
+        } else {
+            return response()->json(['type' => 0, 'msg' => 'Something went wrong']);
+        }
+    }
+
+    public function insertItem(Request $request)
+    {
+        $this->validate($request, [
+            'name' => 'required',
+            // 'unit_id' => 'required',
+            'selling_price' => 'required',
+            'account_type_id' => 'required',
+            'tax_id' => 'required',
+        ]);
+        $item = new Item();
+        $item->business_id = Auth::guard('web')->user()->business->id;
+        $item->name = $request->name;
+        $item->unit_id = $request->unit_id;
+        $item->selling_price = $request->selling_price;
+        $item->account_type_id = $request->account_type_id;
+        $item->tax_id = $request->tax_id;
+        $item->description = $request->description;
+        $item->is_service = $request->is_service;
+
+        if ($item->save()) {
+            return response()->json(['type' => 1, 'data' => Item::select('id', 'name AS text')->where("business_id", Auth::guard('web')->user()->business->id)->get()]);
+        } else {
             return response()->json(['type' => 0, 'msg' => 'Something went wrong']);
         }
     }

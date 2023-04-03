@@ -96,7 +96,7 @@
                                                     {{ Auth::guard('web')->user()->business->country->currency }}
                                                 </div>
                                             </div>
-                                            <input type="number" class="form-control" id="selling_price"
+                                            <input type="number" class="form-control numbers" id="selling_price"
                                                 name="selling_price" value="{{ old('selling_price') }}" required>
                                         </div>
 

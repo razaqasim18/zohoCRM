@@ -46,7 +46,7 @@ class CustomerController extends Controller
             'salutation' => 'required',
             'first_name' => 'required',
             'last_name' => 'required',
-            'email' => 'required',
+            'email' => 'required|email|unique:customers',
             'display_name' => 'required',
         ]);
         DB::beginTransaction();

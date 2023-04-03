@@ -39,20 +39,10 @@
                                 @endif
                                 <div class="form-row">
                                     <div class="form-group col-md-6">
-                                        <label for="customer_id">Customer</label> <span class="text-danger">*</span>
-                                        <x-customer customer={{ $customer }} />
+                                        <x-customer-select />
                                     </div>
                                     <div class="form-group col-md-6">
-                                        <label for="sales_person_id">Sale Person</label>
-                                        <select id="sales_person_id" name="sales_person_id" class="form-control select2"
-                                            style="width: 100%">
-                                            <option value="">Select option</option>
-                                            @foreach ($salesperson as $row)
-                                                <option value="{{ $row->id }}">
-                                                    {{ $row->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <x-saleperson-select />
                                     </div>
                                 </div>
 
@@ -130,7 +120,7 @@
                                         <tbody id="div_body">
                                             <tr>
                                                 <td>
-                                                    <select class="form-control item_id">
+                                                    <select class="form-control select2 item_id">
                                                         <option></option>
                                                         @foreach ($item as $row)
                                                             <option value="{{ $row->id }}">
@@ -144,11 +134,11 @@
                                                         id="quantity" min="1" value="1">
                                                 </td>
                                                 <td>
-                                                    <input type="text" class="form-control" name="rate[]"
-                                                        id="rate" min="1" value="0.0">
+                                                    <input type="text" class="form-control" name="rate[]" id="rate"
+                                                        min="1" value="0.0">
                                                 </td>
                                                 <td>
-                                                    <select id="tax" name="tax[]" class="form-control"
+                                                    <select id="tax" name="tax[]" class="form-control tax select2"
                                                         name="tax">
                                                         <option></option>
                                                         @foreach ($tax as $row)
@@ -207,12 +197,12 @@
                                             <div class="form-group col-md-12">
                                                 <label for="sub_total">Sub Total</label>
                                                 <input type="number" id="sub_total" name="sub_total"
-                                                    class="form-control addinput"
+                                                    class="form-control numbers addinput"
                                                     value="{{ old('sub_total') ? old('sub_total') : '0.0' }}" readonly>
                                             </div>
                                             <div class="form-group col-md-12">
                                                 <label for="tax_id">Tax</label>
-                                                <select class="form-control" id="tax_id" name="tax_id">
+                                                <select class="form-control select2" id="tax_id" name="tax_id">
                                                     <option value="">Choose...</option>
                                                     @foreach ($tax as $row)
                                                         <option value="{{ $row->id . '|' . $row->rate }}">
@@ -224,7 +214,7 @@
                                                 <label for="discount">Discount</label>
                                                 <div class="input-group">
                                                     <input type="number" id="ddiscount" name="ddiscount"
-                                                        class="form-control ddiscount"
+                                                        class="form-control numbers ddiscount"
                                                         value="{{ old('ddiscount') ? old('ddiscount') : '0.0' }}"
                                                         min="0">
                                                     <input type="hidden" id="discount" name="discount"
@@ -244,7 +234,7 @@
                                                 <label for="shipping_charges">Shipping Charges</label>
                                                 <div class="input-group">
                                                     <input type="number" id="shipping_charges" name="shipping_charges"
-                                                        class="form-control addinput" min="0"
+                                                        class="form-control numbers addinput" min="0"
                                                         value="{{ old('shipping_charges') ? old('shipping_charges') : '0.0' }}">
                                                 </div>
                                             </div>
@@ -257,7 +247,7 @@
                                             <div class="form-group col-md-6 mt-2">
                                                 <label for="adjustment_name_value">Adjustment Value</label>
                                                 <input type="number" id="adjustment_name_value"
-                                                    name="adjustment_name_value" class="form-control addinput"
+                                                    name="adjustment_name_value" class="form-control numbers addinput"
                                                     min="0"
                                                     value="{{ old('adjustment_name_value') ? old('adjustment_name_value') : '0.0' }}">
                                             </div>
@@ -305,7 +295,8 @@
                                                 <label>Total Amount</label>
                                             </div>
                                             <div class="form-group col-md-6">
-                                                <h5>Total ( {{ Auth::guard('web')->user()->business->country->currency }} )
+                                                <h5>Total (
+                                                    {{ Auth::guard('web')->user()->business->country->currency }} )
                                                 </h5>
                                             </div>
                                             <div class="form-group col-md-6 text-right">
@@ -329,6 +320,8 @@
     </section>
 
     <x-customer-model />
+    <x-saleperson-model />
+    <x-item-model />
 @endsection
 @section('script')
     <script src="{{ asset('js/page/advance-table.js') }}"></script>
@@ -336,13 +329,35 @@
         $(document).ready(function() {
             $('#customer_id').select2().on('select2:open', () => {
                 $(".select2-results:not(:has(a))").append(
-                    '<a href="#" id="loadcustomer" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new customer</a>'
+                    '<a href="#" id="loadcustomermodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new customer</a>'
                 );
             });
 
-            $(document).on('click', "a#loadcustomer", function() {
+            $('#sales_person_id').select2().on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loadsalepersonmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new sales person</a>'
+                );
+            });
+
+            $('.item_id').select2().on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loaditemmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new item</a>'
+                );
+            });
+
+            $(document).on('click', "a#loadcustomermodal", function() {
                 $('#customer_id').select2('close');
                 $("#customerModel").modal('show');
+            });
+
+            $(document).on('click', "a#loadsalepersonmodal", function() {
+                $('#sales_person_id').select2('close');
+                $("#salepersonModel").modal('show');
+            });
+
+            $(document).on('click', "a#loaditemmodal", function() {
+                $('.item_id').select2('close');
+                $("#itemModel").modal('show');
             });
 
             $(document).on('change', "input#quote_date", function() {
@@ -376,10 +391,13 @@
                         $(".loader").hide();
                     },
                     success: function(response) {
-
                         $(thiss).parent().parent().remove();
                         $("#div_body").append(response);
                         calculateSubTotal();
+                        $('.tax').select2({
+                            placeholder: "Select",
+                            allowClear: true,
+                        });
                     }
                 });
 
@@ -410,7 +428,6 @@
             $(document).on('change', 'select#tax_id', function() {
                 calculateTotal();
             });
-
 
         });
 
@@ -445,9 +462,9 @@
                 $("h5#label_tax_amount").text(totaltax);
             }
             let discount = $("input#discount").val();
-            let result = Number(total) + Number(totaltax) - Number(discount);
-            $("input#total_amount").val(result.toFixed(2));
-            $("h5#label_total_amount").text(result.toFixed(2));
+            let result = (Number(total) + Number(totaltax) - Number(discount)).toFixed(2);
+            $("input#total_amount").val(result);
+            $("h5#label_total_amount").text(result);
         }
 
         function calculateSubTotal() {
@@ -464,7 +481,7 @@
             let output = '';
             output += '<tr><td>';
             output +=
-                '<select class="form-control item_id"><option></option> ';
+                '<select class="form-control select2 item_id"><option></option> ';
             @foreach ($item as $row)
                 output += '<option value="' + {{ $row->id }} + '">';
                 output += '{{ $row->name }}';
@@ -473,7 +490,7 @@
             output += '</select></td>';
             output += '<td><input type="text" class="form-control" value="1"> </td>';
             output += '<td><input type="text" class="form-control" value="0.0"></td>';
-            output += '<td><select class="form-control tax_id"><option></option>';
+            output += '<td><select class="form-control tax select2"><option></option>';
             @foreach ($tax as $row)
                 @php $label = $row->name . ' ['. $row->rate . ']'; @endphp
                 output += '<option value="' + {{ $row->id }} + '">';
@@ -488,6 +505,19 @@
                 '<button style="margin: 4px;" type="button" class="btn btn-danger btn-sm m1" id="removenewitem"><i class="fa fa-minus"></i></button></td>';
 
             $("tbody#div_body").append(output);
+            $('.item_id').select2({
+                placeholder: "Select",
+                allowClear: true,
+            }).on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loaditemmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new item</a>'
+                );
+            });
+            $('.tax').select2({
+                placeholder: "Select",
+                allowClear: true,
+            });
+
         }
 
         function countRowTr() {
@@ -501,7 +531,7 @@
             let output = '';
             output += '<tr><td>';
             output +=
-                '<select class="form-control item_id"><option></option> ';
+                '<select class="form-control select2 item_id"><option></option> ';
             @foreach ($item as $row)
                 output += '<option value="' + {{ $row->id }} + '">';
                 output += '{{ $row->name }}';
@@ -510,7 +540,7 @@
             output += '</select></td>';
             output += '<td><input type="text" class="form-control" value="1"> </td>';
             output += '<td><input type="text" class="form-control" value="0.0"></td>';
-            output += '<td><select class="form-control tax_id"><option></option>';
+            output += '<td><select class="form-control tax select2"><option></option>';
             @foreach ($tax as $row)
                 @php $label = $row->name . ' ['. $row->rate . ']'; @endphp
                 output += '<option value="' + {{ $row->id }} + '">';
@@ -521,6 +551,10 @@
             output += '<td><input type="text" class="form-control" name="amount[]" id="amount" value="0.0" readonly></td>';
             output +=
                 '<td style="display:flex;"><button style="margin: 4px;" type="button" class="btn btn-primary btn-sm m1" id="addnewitem"><i class="fa fa-plus"></i></button></td>';
+            $('.tax').select2({
+                placeholder: "Select",
+                allowClear: true,
+            });
             $("tbody#div_body").append(output);
         }
     </script>

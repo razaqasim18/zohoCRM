@@ -40,30 +40,10 @@
                                 @endif
                                 <div class="form-row">
                                     <div class="form-group col-md-6">
-                                        <label for="customer_id">Customer</label> <span class="text-danger">*</span>
-                                        <select id="customer_id" name="customer_id" class="form-control select2"
-                                            style="width: 100%" required>
-                                            <option value="">Select option</option>
-                                            @foreach ($customer as $row)
-                                                <option value="{{ $row->id }}"
-                                                    @if ($row->id == $quote->customer_id) selected @endif>
-                                                    {{ $row->display_name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <x-customer-select selectedid="{{ $quote->customer_id }}" />
                                     </div>
                                     <div class="form-group col-md-6">
-                                        <label for="sales_person_id">Sale Person</label>
-                                        <select id="sales_person_id" name="sales_person_id" class="form-control select2"
-                                            style="width: 100%">
-                                            <option value="">Select option</option>
-                                            @foreach ($salesperson as $row)
-                                                <option value="{{ $row->id }}"
-                                                    @if ($row->id == $quote->sales_person_id) selected @endif>
-                                                    {{ $row->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <x-saleperson-select selectedid="{{ $quote->sales_person_id }}" />
                                     </div>
                                 </div>
 
@@ -153,7 +133,7 @@
                                                     <td><select id="tax" name="tax[]"
                                                             class="form-control select2">
                                                             @foreach ($tax as $row)
-                                                                <option>Choser</option>";
+                                                                <option>Choose</option>
                                                                 <option value="{{ $row->id }}"
                                                                     @if ($row->id == $item->tax_id) selected @endif>
                                                                     {{ $row->name . ' [' . $row->rate . ']' }}
@@ -177,7 +157,7 @@
                                             @endforeach
                                             <tr>
                                                 <td>
-                                                    <select class="form-control item_id">
+                                                    <select class="form-control select2 item_id">
                                                         <option></option>
                                                         @foreach ($allitem as $row)
                                                             <option value="{{ $row->id }}">
@@ -195,9 +175,9 @@
                                                         id="rate" value="0.0">
                                                 </td>
                                                 <td>
-                                                    <select id="tax" name="tax[]" class="form-control"
+                                                    <select id="tax" name="tax[]" class="form-control select2"
                                                         name="tax">
-                                                        <option></option>
+                                                        <option>Choose</option>
                                                         @foreach ($tax as $row)
                                                             <option value="{{ $row->id }}">
                                                                 {{ $row->name . ' [' . $row->rate . ']' }}
@@ -255,12 +235,12 @@
                                             <div class="form-group col-md-12">
                                                 <label for="sub_total">Sub Total</label>
                                                 <input type="number" id="sub_total" name="sub_total"
-                                                    class="form-control addinput"
+                                                    class="form-control numbers addinput"
                                                     value="{{ old('sub_total') ? old('sub_total') : '0.0' }}" readonly>
                                             </div>
                                             <div class="form-group col-md-12">
                                                 <label for="tax_id">Tax</label>
-                                                <select class="form-control" id="tax_id" name="tax_id">
+                                                <select class="form-control tax select2" id="tax_id" name="tax_id">
                                                     <option value="">Choose...</option>
                                                     @foreach ($tax as $row)
                                                         <option value="{{ $row->id . '|' . $row->rate }}"
@@ -273,7 +253,7 @@
                                                 <label for="discount">Discount</label>
                                                 <div class="input-group">
                                                     <input type="number" id="ddiscount" name="ddiscount"
-                                                        class="form-control ddiscount"
+                                                        class="form-control numbers ddiscount"
                                                         value="{{ $quote->discount ? $quote->discount : '0.0' }}"
                                                         min="0">
                                                     <input type="hidden" id="discount" name="discount"
@@ -296,7 +276,7 @@
                                                 <label for="shipping_charges">Shipping Charges</label>
                                                 <div class="input-group">
                                                     <input type="number" id="shipping_charges" name="shipping_charges"
-                                                        class="form-control addinput" min="0"
+                                                        class="form-control numbers addinput" min="0"
                                                         value="{{ $quote->shipping_charges ? $quote->shipping_charges : '0.0' }}">
                                                 </div>
                                             </div>
@@ -309,7 +289,7 @@
                                             <div class="form-group col-md-6 mt-2">
                                                 <label for="adjustment_name_value">Adjustment Value</label>
                                                 <input type="number" id="adjustment_name_value"
-                                                    name="adjustment_name_value" class="form-control addinput"
+                                                    name="adjustment_name_value" class="form-control numbers addinput"
                                                     min="0"
                                                     value="{{ $quote->adjustment_value ? $quote->adjustment_value : '0.0' }}">
                                             </div>
@@ -379,6 +359,10 @@
             </div>
         </div>
     </section>
+
+    <x-customer-model />
+    <x-saleperson-model />
+    <x-item-model />
 @endsection
 @section('script')
     <script src="{{ asset('js/page/advance-table.js') }}"></script>
@@ -388,6 +372,39 @@
             calculateSubTotal();
             calculateDiscount();
             calculateTotal();
+
+            $('#customer_id').select2().on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loadcustomermodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new customer</a>'
+                );
+            });
+
+            $('#sales_person_id').select2().on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loadsalepersonmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new sales person</a>'
+                );
+            });
+
+            $('.item_id').select2().on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loaditemmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new item</a>'
+                );
+            });
+
+            $(document).on('click', "a#loadcustomermodal", function() {
+                $('#customer_id').select2('close');
+                $("#customerModel").modal('show');
+            });
+
+            $(document).on('click', "a#loadsalepersonmodal", function() {
+                $('#sales_person_id').select2('close');
+                $("#salepersonModel").modal('show');
+            });
+
+            $(document).on('click', "a#loaditemmodal", function() {
+                $('.item_id').select2('close');
+                $("#itemModel").modal('show');
+            });
 
             $(document).on('change', "input#quote_date", function() {
                 $("input#expiry_date").attr("min", $(this).val());
@@ -421,6 +438,10 @@
                     },
                     success: function(response) {
                         $(thiss).parent().parent().remove();
+                        $('.tax').select2({
+                            placeholder: "Select",
+                            allowClear: true,
+                        });
                         $("#div_body").append(response);
                         calculateSubTotal();
                     }
@@ -493,6 +514,7 @@
             });
         });
 
+
         function calculateDiscount() {
             let value = Number($('input#ddiscount').val());
             let option = $('select#discountopt option:selected').val();
@@ -502,7 +524,7 @@
                 $("input.addinput").each(function() {
                     total = Number(total) + Number($(this).val());
                 });
-                result = (total * (value / 100)).toFixed(2);
+                result = (total * (value / 100)).toFixed(2);;
             } else {
                 result = value.toFixed(2);
             }
@@ -515,7 +537,7 @@
             let total = 0;
             let tax = $('select#tax_id option:selected').val();
             $("input.addinput").each(function() {
-                total = (Number(total) + Number($(this).val())).toFixed(2);
+                total = Number(total) + Number($(this).val());
             });
             let totaltax = 0;
             if (tax != '') {
@@ -532,7 +554,7 @@
         function calculateSubTotal() {
             let total = 0;
             $("input.inputamount").each(function() {
-                total = (Number(total) + Number($(this).val())).toFixed(2);
+                total = (Number(total) + Number($(this).val())).toFixed(2);;
             });
             $("input#sub_total").val(total);
             $("#label_sub_total_amount").html(total);
@@ -543,7 +565,7 @@
             let output = '';
             output += '<tr><td>';
             output +=
-                '<select class="form-control item_id"><option></option> ';
+                '<select class="form-control select2 item_id"><option></option> ';
             @foreach ($allitem as $row)
                 output += '<option value="' + {{ $row->id }} + '">';
                 output += '{{ $row->name }}';
@@ -552,7 +574,7 @@
             output += '</select></td>';
             output += '<td><input type="text" class="form-control" value="1"> </td>';
             output += '<td><input type="text" class="form-control" value="0.0"></td>';
-            output += '<td><select class="form-control tax_id"><option></option>';
+            output += '<td><select class="form-control tax select2"><option></option>';
             @foreach ($tax as $row)
                 @php $label = $row->name . ' ['. $row->rate . ']'; @endphp
                 output += '<option value="' + {{ $row->id }} + '">';
@@ -565,8 +587,19 @@
                 '<td style="display:flex;"><button style="margin: 4px;" type="button" class="btn btn-primary btn-sm m1" id="addnewitem"><i class="fa fa-plus"></i></button>';
             output +=
                 '<button style="margin: 4px;" type="button" class="btn btn-danger btn-sm m1" id="removenewitem"><i class="fa fa-minus"></i></button></td>';
-
             $("tbody#div_body").append(output);
+            $('.item_id').select2({
+                placeholder: "Select",
+                allowClear: true,
+            }).on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loaditemmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new item</a>'
+                );
+            });
+            $('.tax').select2({
+                placeholder: "Select",
+                allowClear: true,
+            });
         }
 
         function countRowTr() {
@@ -580,7 +613,7 @@
             let output = '';
             output += '<tr><td>';
             output +=
-                '<select class="form-control item_id"><option></option> ';
+                '<select class="form-control select2 item_id"><option></option> ';
             @foreach ($allitem as $row)
                 output += '<option value="' + {{ $row->id }} + '">';
                 output += '{{ $row->name }}';
@@ -589,7 +622,7 @@
             output += '</select></td>';
             output += '<td><input type="text" class="form-control" value="1"> </td>';
             output += '<td><input type="text" class="form-control" value="0.0"></td>';
-            output += '<td><select class="form-control tax_id"><option></option>';
+            output += '<td><select class="form-control select2 tax_id"><option></option>';
             @foreach ($tax as $row)
                 @php $label = $row->name . ' ['. $row->rate . ']'; @endphp
                 output += '<option value="' + {{ $row->id }} + '">';
@@ -600,7 +633,20 @@
             output += '<td><input type="text" class="form-control" name="amount[]" id="amount" value="0.0" readonly></td>';
             output +=
                 '<td style="display:flex;"><button style="margin: 4px;" type="button" class="btn btn-primary btn-sm m1" id="addnewitem"><i class="fa fa-plus"></i></button></td>';
+
             $("tbody#div_body").append(output);
+            $('.item_id').select2({
+                placeholder: "Select",
+                allowClear: true,
+            }).on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loaditemmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new item</a>'
+                );
+            });
+            $('.tax').select2({
+                placeholder: "Select",
+                allowClear: true,
+            });
         }
     </script>
 @endsection

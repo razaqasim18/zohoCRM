@@ -10,6 +10,7 @@
                 </button>
             </div>
             <div class="modal-body">
+                <div id="customerrror"></div>
                 <form id="customerForm">
                     @csrf
                     <div class="form-row">
@@ -162,7 +163,6 @@
             myForm[0].reportValidity();
             return false;
         }
-        console.log($('#customerForm').serialize());
         let token = "{{ csrf_token() }}";
         let url = "{{ url('/quote/customer/insert/ajax') }}";
         $.ajax({
@@ -178,12 +178,20 @@
             success: function(response) {
                 var typeOfResponse = response.type;
                 if (!typeOfResponse) {
-                    let msg = response.msg;
-                    iziToast.error({
-                        title: 'Error!<br>',
-                        message: msg,
-                        position: 'topRight'
-                    });
+                    if (response.validator_error) {
+                        let errors = response.errors;
+                        $.each(response.errors, function(key, value) {
+                            $('#customerrror').append('<div class="alert alert-danger">' +
+                                value + '</div>');
+                        });
+                    } else {
+                        let msg = response.msg;
+                        iziToast.error({
+                            title: 'Error!<br>',
+                            message: msg,
+                            position: 'topRight'
+                        });
+                    }
                 } else {
                     let data = response.data;
                     $('#customer_id').select2({

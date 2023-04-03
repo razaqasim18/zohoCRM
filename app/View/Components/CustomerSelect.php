@@ -6,18 +6,20 @@ use App\Models\Customer as CustomerModel;
 use Auth;
 use Illuminate\View\Component;
 
-class Customer extends Component
+class CustomerSelect extends Component
 {
+    public $selectedid;
     public $customer;
     /**
      * Create a new component instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($selectedid = '')
     {
         $customer = CustomerModel::where('business_id', Auth::user()->business->id)->get();
         $this->customer = $customer;
+        $this->selectedid = $selectedid;
     }
 
     /**
@@ -27,6 +29,6 @@ class Customer extends Component
      */
     public function render()
     {
-        return view('components.customer');
+        return view('components.customer-select');
     }
 }

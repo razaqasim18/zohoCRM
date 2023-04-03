@@ -13,16 +13,19 @@ use Illuminate\Support\Facades\Route;
 |
  */
 
-Route::get('/welcome', function () {
+// Route::get('/welcome', function () {
 
-    // $file_path = storage_path('app/insert_state.txt');
+// $file_path = storage_path('app/insert_state.txt');
 
-    // foreach (file($file_path) as $line) {
-    //     DB::insert($line);
-    // }
+// foreach (file($file_path) as $line) {
+//     DB::insert($line);
+// }
 
-    // $query = DB::statement("Select * from countries");
-    // dd($query);
+// $query = DB::statement("Select * from countries");
+// dd($query);
+// });
+Route::get('/', function () {
+    return redirect()->route('login');
 });
 
 Auth::routes(['verify' => true]);
@@ -75,7 +78,9 @@ Route::middleware(['auth:web', 'verified', 'isblocked'])->group(function () {
         Route::get('/clone/{id}', [App\Http\Controllers\QuoteController::class, 'cloned'])->name('clone');
 
         // ajax
-        Route::post('/customer/insert/ajax', [App\Http\Controllers\QuoteController::class, 'insertCustomer'])->name('insert');
+        Route::post('/customer/insert/ajax', [App\Http\Controllers\QuoteController::class, 'insertCustomer'])->name('customer.ajax.insert');
+        Route::post('/saleperson/insert/ajax', [App\Http\Controllers\QuoteController::class, 'insertSaleperson'])->name('saleperson.ajax.insert');
+        Route::post('/item/insert/ajax', [App\Http\Controllers\QuoteController::class, 'insertItem'])->name('item.ajax.insert');
 
     });
 
