@@ -8,6 +8,4 @@
             </option>
         @endforeach
     </select>
-
-
 </div>

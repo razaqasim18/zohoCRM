@@ -11,6 +11,11 @@
         .table-sm th {
             padding: 0.3rem 0.2rem;
         }
+
+        span#taxoutput div {
+            padding-right: 5px;
+            padding-left: 5px;
+        }
     </style>
 @endsection
 @section('content')
@@ -118,31 +123,55 @@
                                                 <th scope="col" width="10%">Action</th>
                                             </tr>
                                         </thead>
+
                                         <tbody id="div_body">
+                                            @php
+                                                $i = 1;
+                                                $taxrate = '';
+                                            @endphp
                                             @foreach ($itemquote as $item)
                                                 <tr>
-                                                    <td><input type='hidden' id='items_id' class='items_id'
+                                                    <td>
+                                                        <input type='hidden' id='items_id' class='items_id'
                                                             name='items_id[]' value="{{ $item->itemsid }}" /><input
                                                             type='text' id='item_name' class='form-control item_name'
-                                                            value="{{ $item->name }}" readonly /></td>
-                                                    <td><input type='number' id='quantity'
-                                                            class='form-control quantity' name='quantity[]'
-                                                            value="{{ $item->quantity }}" min='1' required /></td>
-                                                    <td><input type='number' id='rate' class='form-control rate'
-                                                            name='rate[]' value="{{ $item->rate }}" required /></td>
-                                                    <td><select id="tax" name="tax[]"
-                                                            class="form-control select2">
+                                                            value="{{ $item->itemsname }}" readonly />
+                                                    </td>
+                                                    <td>
+                                                        <input type='number' id='quantity' class='form-control quantity'
+                                                            name='quantity[]' value="{{ $item->quantity }}"
+                                                            min='1' required />
+                                                    </td>
+                                                    <td>
+                                                        <input type='number' id='rate' class='form-control rate'
+                                                            name='rate[]' value="{{ $item->rate }}" required />
+                                                    </td>
+                                                    <td>
+                                                        <select id="tax" name="tax[]"
+                                                            class="form-control createdtax select2">
                                                             @foreach ($tax as $row)
-                                                                <option>Choose</option>
+                                                                @php
+                                                                    if ($row->id == $item->taxid) {
+                                                                        $taxrate = $row->rate;
+                                                                    }
+                                                                @endphp
+                                                                <option></option>
                                                                 <option value="{{ $row->id }}"
-                                                                    @if ($row->id == $item->tax_id) selected @endif>
+                                                                    @if ($row->id == $item->taxid) selected @endif>
                                                                     {{ $row->name . ' [' . $row->rate . ']' }}
                                                                 </option>
                                                             @endforeach
-                                                        </select></td>
-                                                    <td><input type='text' id='amount'
+                                                        </select>
+                                                        <input type='hidden' class='form-control taxvalue'
+                                                            value="{{ $taxrate }}" readonly />
+                                                        <input type="hidden" class="form-control taxid"
+                                                            value="{{ $i++ . $item->taxid }}" readonly>
+                                                    </td>
+                                                    <td>
+                                                        <input type='text' id='amount'
                                                             class='form-control inputamount' name='amount[]'
-                                                            value="{{ $item->amount }}" readonly /></td>
+                                                            value="{{ $item->amount }}" readonly />
+                                                    </td>
                                                     <td style="display:flex">
                                                         <button type="button" class="btn btn-primary btn-sm m-1"
                                                             id="addnewitem">
@@ -167,17 +196,16 @@
                                                     </select>
                                                 </td>
                                                 <td>
-                                                    <input type="text" class="form-control" name="quantity[]"
+                                                    <input type="number" class="form-control" name="quantity[]"
                                                         id="quantity" value="1">
                                                 </td>
                                                 <td>
-                                                    <input type="text" class="form-control" name="rate[]"
+                                                    <input type="number" class="form-control" name="rate[]"
                                                         id="rate" value="0.0">
                                                 </td>
                                                 <td>
-                                                    <select id="tax" name="tax[]" class="form-control select2"
-                                                        name="tax">
-                                                        <option>Choose</option>
+                                                    <select class="form-control select2 tax">
+                                                        <option></option>
                                                         @foreach ($tax as $row)
                                                             <option value="{{ $row->id }}">
                                                                 {{ $row->name . ' [' . $row->rate . ']' }}
@@ -238,17 +266,7 @@
                                                     class="form-control numbers addinput"
                                                     value="{{ old('sub_total') ? old('sub_total') : '0.0' }}" readonly>
                                             </div>
-                                            <div class="form-group col-md-12">
-                                                <label for="tax_id">Tax</label>
-                                                <select class="form-control tax select2" id="tax_id" name="tax_id">
-                                                    <option value="">Choose...</option>
-                                                    @foreach ($tax as $row)
-                                                        <option value="{{ $row->id . '|' . $row->rate }}"
-                                                            @if ($row->id == $quote->tax_id) selected @endif>
-                                                            {{ $row->name . ' - ' . $row->rate }} </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
+
                                             <div class="form-group col-md-12">
                                                 <label for="discount">Discount</label>
                                                 <div class="input-group">
@@ -261,11 +279,11 @@
                                                         value="{{ $quote->discount ? $quote->discount : '0.0' }}">
                                                     <div class="input-group-append">
                                                         <select class="form-control" id="discountopt" name="discountopt">
-                                                            <option value="1"
+                                                            <option value="0"
                                                                 @if ($quote->discount_is_percentage == '0') selected @endif>
                                                                 {{ Auth::guard('web')->user()->business->country->currency }}
                                                             </option>
-                                                            <option value="2"
+                                                            <option value="1"
                                                                 @if ($quote->discount_is_percentage == '1') selected @endif> %
                                                             </option>
                                                         </select>
@@ -314,14 +332,29 @@
                                             <div class="form-group col-md-12">
                                                 <label>Tax Amount</label>
                                             </div>
-                                            <div class="form-group col-md-6">
-                                                <h5>Tax (
-                                                    {{ Auth::guard('web')->user()->business->country->currency }} )
-                                                </h5>
-                                            </div>
-                                            <div class="form-group col-md-6 text-right">
-                                                <h5 id="label_tax_amount">0.0</h5>
-                                            </div>
+                                            <span id="taxoutput" style="width: 100%">
+                                                @php $i = 1; @endphp
+                                                @foreach ($itemquote as $item)
+                                                    @foreach ($tax as $row)
+                                                        @if ($row->id == $item->taxid)
+                                                            <div class='form-row' id='tax{{ $i++ . $item->taxid }}'>
+                                                                <div class='form-group col-md-8'>
+                                                                    <h5> {{ $row->name . ' [' . $row->rate . ']' }}</h5>
+                                                                </div>
+                                                                <div class='form-group col-md-4 text-right'>
+                                                                    <h4>{{ $item->amount * ($row->rate / 100) }}</h4>
+                                                                    <input type='hidden' class='form-control taxvalue'
+                                                                        value='{{ $row->rate }}' readonly />
+                                                                    <input type='hidden'
+                                                                        class='form-control calculatedtax'
+                                                                        value='{{ $item->amount * ($row->rate / 100) }}'
+                                                                        readonly />
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                @endforeach
+                                            </span>
                                             <div class="form-group col-md-12">
                                                 <label>Discount Amount</label>
                                             </div>
@@ -363,6 +396,7 @@
     <x-customer-model />
     <x-saleperson-model />
     <x-item-model />
+    <x-tax-model />
 @endsection
 @section('script')
     <script src="{{ asset('js/page/advance-table.js') }}"></script>
@@ -372,56 +406,6 @@
             calculateSubTotal();
             calculateDiscount();
             calculateTotal();
-
-            $('#customer_id').select2().on('select2:open', () => {
-                $(".select2-results:not(:has(a))").append(
-                    '<a href="#" id="loadcustomermodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new customer</a>'
-                );
-            });
-
-            $('#sales_person_id').select2().on('select2:open', () => {
-                $(".select2-results:not(:has(a))").append(
-                    '<a href="#" id="loadsalepersonmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new sales person</a>'
-                );
-            });
-
-            $('.item_id').select2().on('select2:open', () => {
-                $(".select2-results:not(:has(a))").append(
-                    '<a href="#" id="loaditemmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new item</a>'
-                );
-            });
-
-            $(document).on('click', "a#loadcustomermodal", function() {
-                $('#customer_id').select2('close');
-                $("#customerModel").modal('show');
-            });
-
-            $(document).on('click', "a#loadsalepersonmodal", function() {
-                $('#sales_person_id').select2('close');
-                $("#salepersonModel").modal('show');
-            });
-
-            $(document).on('click', "a#loaditemmodal", function() {
-                $('.item_id').select2('close');
-                $("#itemModel").modal('show');
-            });
-
-            $(document).on('change', "input#quote_date", function() {
-                $("input#expiry_date").attr("min", $(this).val());
-            });
-
-            $(document).on('keyup', 'input.quantity', function() {
-                var result = Number($(this).val()) * Number($(this).closest('tr').find('input.rate').val());
-                $(this).closest('tr').find('input.inputamount').val(result);
-                calculateSubTotal();
-            });
-
-            $(document).on('keyup', 'input.rate', function() {
-                var result = Number($(this).val()) * Number($(this).closest('tr').find('input.quantity')
-                    .val());
-                $(this).closest('tr').find('input.inputamount').val(result);
-                calculateSubTotal();
-            });
 
             $(document).on('change', "select.item_id", function() {
                 let thiss = $(this);
@@ -437,40 +421,80 @@
                         $(".loader").hide();
                     },
                     success: function(response) {
-                        $(thiss).parent().parent().remove();
-                        $('.tax').select2({
+                        $(thiss).parent().parent().html(response.htmloutput);
+                        $("#taxoutput").append(response.taxoutput);
+
+                        // $(thiss).html(response);
+                        calculateSubTotal();
+                        $('.item_id').select2({
                             placeholder: "Select",
                             allowClear: true,
+                        }).on('select2:open', () => {
+                            $(".select2-results:not(:has(a))").append(
+                                '<a href="#" id="loaditemmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new item</a>'
+                            );
                         });
-                        $("#div_body").append(response);
-                        calculateSubTotal();
+                        $('.selecttax').select2({
+                            placeholder: "Select",
+                            allowClear: true,
+                        }).on('select2:open', () => {
+                            $(".select2-results:not(:has(a))").append(
+                                '<a href="#" id="loadtaxmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new tax</a>'
+                            );
+                        });
+
                     }
                 });
             });
 
-            $(document).on('click', 'button#addnewitem', function() {
-                newItemCreate();
-            });
-
-            $(document).on('click', 'button#removenewitem', function() {
-                $(this).parent().parent().remove();
-                countRowTr();
-                calculateSubTotal();
-            });
-
-            $(document).on('keyup', 'input.addinput', function() {
+            $(document).on('change', "select.createdtax", function() {
+                var data = $(this).select2('data');
+                // let id = data[0]['id'];
+                let text = data[0]['text'];
+                let amount = $(this).closest("tr").find("input.inputamount").val();
+                let taxid = $(this).closest("tr").find("input.taxid").val();
+                let calculatedtax = '';
+                let regex = /\[ *(\d+) *\]/;
+                let match = text.match(regex);
+                if (match) {
+                    tax = parseInt(match[1]);
+                }
+                $(this).closest("tr").find("input.taxvalue").val(tax);
+                let result = (amount * (tax / 100)).toFixed(2);
+                let output = "";
+                output += "<div class='form-group col-md-8'>";
+                output += "<h5> " + text + " </h5></div>";
+                output += "<div class='form-group col-md-4 text-right'>";
+                output += "<h4> " + result +
+                    " </h4><input type='hidden' class='form-control calculatedtax'  value='" + result +
+                    "' readonly /></div>";
+                let rowid = "div#tax" + taxid;
+                $(rowid).html(output);
                 calculateTotal();
             });
 
-            $(document).on('keyup', 'input.ddiscount', function() {
-                calculateDiscount();
-            });
-
-            $(document).on('change', 'select#discountopt', function() {
-                calculateDiscount();
-            });
-
-            $(document).on('change', 'select#tax_id', function() {
+            $(document).on('change', "select.selecttax", function() {
+                var data = $(this).select2('data');
+                // let id = data[0]['id'];
+                let text = data[0]['text'];
+                let amount = $(this).closest("tr").find("input.inputamount").val();
+                let taxid = $(this).closest("tr").find("input.taxid").val();
+                let calculatedtax = '';
+                let regex = /\[ *(\d+) *\]/;
+                let match = text.match(regex);
+                if (match) {
+                    tax = parseInt(match[1]);
+                }
+                let result = (amount * (tax / 100)).toFixed(2);
+                let output = "";
+                output += "<div class='form-group col-md-8'>";
+                output += "<h5> " + text + " </h5></div>";
+                output += "<div class='form-group col-md-4 text-right'>";
+                output += "<h4> " + result +
+                    " </h4><input type='hidden' class='form-control calculatedtax'  value='" + result +
+                    "' readonly /></div>";
+                let rowid = "div#taxrow" + taxid;
+                $(rowid).html(output);
                 calculateTotal();
             });
 
@@ -504,6 +528,9 @@
                                 },
                                 success: function(response) {
                                     $(thiss).parent().parent().remove();
+                                    let taxid = $(thiss).closest("tr").find("input.taxid")
+                                        .val();
+                                    $("#tax" + taxid).remove();
                                     calculateSubTotal();
                                     calculateDiscount();
                                     calculateTotal();
@@ -513,53 +540,6 @@
                     });
             });
         });
-
-
-        function calculateDiscount() {
-            let value = Number($('input#ddiscount').val());
-            let option = $('select#discountopt option:selected').val();
-            let result = 0;
-            if (option == '2' || option == 2) {
-                let total = 0;
-                $("input.addinput").each(function() {
-                    total = Number(total) + Number($(this).val());
-                });
-                result = (total * (value / 100)).toFixed(2);;
-            } else {
-                result = value.toFixed(2);
-            }
-            $('#label_discount_amount').text(result);
-            $('input#discount').val(result);
-            calculateTotal();
-        }
-
-        function calculateTotal() {
-            let total = 0;
-            let tax = $('select#tax_id option:selected').val();
-            $("input.addinput").each(function() {
-                total = Number(total) + Number($(this).val());
-            });
-            let totaltax = 0;
-            if (tax != '') {
-                let taxvalue = tax.split('|');
-                totaltax = (Number(total) * (taxvalue[1] / 100)).toFixed(2);
-                $("h5#label_tax_amount").text(totaltax);
-            }
-            let discount = $("input#discount").val();
-            let result = (Number(total) + Number(totaltax) - Number(discount)).toFixed(2);
-            $("input#total_amount").val(result);
-            $("h5#label_total_amount").text(result);
-        }
-
-        function calculateSubTotal() {
-            let total = 0;
-            $("input.inputamount").each(function() {
-                total = (Number(total) + Number($(this).val())).toFixed(2);;
-            });
-            $("input#sub_total").val(total);
-            $("#label_sub_total_amount").html(total);
-            calculateTotal();
-        }
 
         function newItemCreate() {
             let output = '';
@@ -587,6 +567,7 @@
                 '<td style="display:flex;"><button style="margin: 4px;" type="button" class="btn btn-primary btn-sm m1" id="addnewitem"><i class="fa fa-plus"></i></button>';
             output +=
                 '<button style="margin: 4px;" type="button" class="btn btn-danger btn-sm m1" id="removenewitem"><i class="fa fa-minus"></i></button></td>';
+
             $("tbody#div_body").append(output);
             $('.item_id').select2({
                 placeholder: "Select",
@@ -596,17 +577,15 @@
                     '<a href="#" id="loaditemmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new item</a>'
                 );
             });
-            $('.tax').select2({
+            $('.selecttax').select2({
                 placeholder: "Select",
                 allowClear: true,
+            }).on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loadtaxmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new tax</a>'
+                );
             });
-        }
 
-        function countRowTr() {
-            var count = $('#div_body tr').length;
-            if (count == 0) {
-                newItemnodelete();
-            }
         }
 
         function newItemnodelete() {
@@ -622,7 +601,7 @@
             output += '</select></td>';
             output += '<td><input type="text" class="form-control" value="1"> </td>';
             output += '<td><input type="text" class="form-control" value="0.0"></td>';
-            output += '<td><select class="form-control select2 tax_id"><option></option>';
+            output += '<td><select class="form-control tax select2"><option></option>';
             @foreach ($tax as $row)
                 @php $label = $row->name . ' ['. $row->rate . ']'; @endphp
                 output += '<option value="' + {{ $row->id }} + '">';
@@ -633,7 +612,6 @@
             output += '<td><input type="text" class="form-control" name="amount[]" id="amount" value="0.0" readonly></td>';
             output +=
                 '<td style="display:flex;"><button style="margin: 4px;" type="button" class="btn btn-primary btn-sm m1" id="addnewitem"><i class="fa fa-plus"></i></button></td>';
-
             $("tbody#div_body").append(output);
             $('.item_id').select2({
                 placeholder: "Select",
@@ -646,7 +624,12 @@
             $('.tax').select2({
                 placeholder: "Select",
                 allowClear: true,
+            }).on('select2:open', () => {
+                $(".select2-results:not(:has(a))").append(
+                    '<a href="#" id="loadtaxmodal" style="padding: 6px;height: 20px;display: inline-table; width: 100%;"><i class="fas fa-plus-circle"></i> Create new tax</a>'
+                );
             });
+
         }
     </script>
 @endsection

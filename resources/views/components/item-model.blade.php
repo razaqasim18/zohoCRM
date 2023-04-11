@@ -5,16 +5,14 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="myLargeModalLabel">Add Item</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" onclick="closeItem()" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <form id="itemModelForm">
                 <div class="modal-body">
                     <div id="itemerror"></div>
-
                     @csrf
-
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label>Type</label>
@@ -50,17 +48,17 @@
 
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="unit_id">Unit</label>
-                            <select id="unit_id" name="unit_id" class="form-control select2"
+                            <label for="model_unit_id">Unit</label>
+                            <select id="model_unit_id" name="model_unit_id" class="form-control select2"
                                 style="width:364px !important;">
                                 <option value="">Choose...</option>
                                 @foreach ($unit as $row)
                                     <option value="{{ $row->id }}"
-                                        @if (old('unit_id') == $row->id) selected @endif>{{ $row->unit }}
+                                        @if (old('model_unit_id') == $row->id) selected @endif>{{ $row->unit }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('unit_id')
+                            @error('model_unit_id')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -86,9 +84,9 @@
                     <div class="form-row">
 
                         <div class="form-group col-md-6">
-                            <label for="account_type_id">Account</label>
+                            <label for="model_account_type_id">Account</label>
                             <span class="text-danger">*</span>
-                            <select id="account_type_id" name="account_type_id" class="form-control select2"
+                            <select id="model_account_type_id" name="model_account_type_id" class="form-control select2"
                                 style="width:364px !important;" required>
                                 <option value="">Choose...</option>
                                 @foreach ($account as $row)
@@ -103,19 +101,19 @@
                             @enderror
                         </div>
                         <div class="form-group col-md-6">
-                            <label for="tax_id">Tax</label>
+                            <label for="model_tax_id">Tax</label>
                             <span class="text-danger">*</span>
-                            <select id="tax_id" name="tax_id" class="form-control select2"
+                            <select id="model_tax_id" name="model_tax_id" class="form-control select2"
                                 style="width:364px !important;" required>
                                 <option value="">Choose...</option>
                                 @foreach ($tax as $row)
                                     <option value="{{ $row->id }}"
-                                        @if (old('tax_id') == $row->id) selected @endif>
+                                        @if (old('model_tax_id') == $row->id) selected @endif>
                                         {{ $row->name . ' [' . $row->rate . ']' }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('tax_id')
+                            @error('model_tax_id')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -141,6 +139,9 @@
 </div>
 <script>
     function closeItem() {
+        $('#model_tax_id').val(null).trigger('change');
+        $('#model_unit_id').val(null).trigger('change');
+        $('#model_account_type_id').val(null).trigger('change');
         $("#itemModel").modal('hide');
     }
 
@@ -192,9 +193,14 @@
                         message: "Item is added successfully",
                         position: 'topRight'
                     });
-
+                    $('#model_tax_id').val(null).trigger('change');
+                    $('#model_unit_id').val(null).trigger('change');
+                    $('#model_account_type_id').val(null).trigger('change');
                     $('#itemModelForm')[0].reset();
                     $('#itemModel').modal('hide');
+                    $('html, body').animate({
+                        scrollTop: $("#subject").offset().top
+                    }, 1000);
                 }
             }
         });

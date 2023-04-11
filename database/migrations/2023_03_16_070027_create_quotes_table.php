@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('business_id');
             $table->unsignedBigInteger('sales_person_id')->nullable();
             $table->unsignedBigInteger('customer_id');
-            $table->unsignedBigInteger('tax_id')->nullable();
+            // $table->unsignedBigInteger('tax_id')->nullable();
 
             $table->string('quote_number', 100);
             $table->string('reference_number', 100)->nullable();
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->text('subject')->nullable();
             $table->text('note')->nullable();
             $table->text('terms_condition')->nullable();
-            $table->text('image')->nullable();
+            // $table->text('image')->nullable();
             $table->double('sub_total')->default(0);
             $table->double('discount')->default(0);
             $table->boolean('discount_is_percentage')->default(0)->comment("0 for amount , 1 for percentage");
@@ -43,8 +43,8 @@ return new class extends Migration
                 ->references('id')->on('sales_people')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('customer_id')
                 ->references('id')->on('customers')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('tax_id')
-                ->references('id')->on('taxes')->onDelete('cascade')->onUpdate('cascade');
+            // $table->foreign('tax_id')
+            //     ->references('id')->on('taxes')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

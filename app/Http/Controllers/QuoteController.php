@@ -14,6 +14,7 @@ use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class QuoteController extends Controller
 {
@@ -46,23 +47,44 @@ class QuoteController extends Controller
         $tax = Tax::where('business_id', Auth::user()->business->id)->get();
         $amount = $item->selling_price * 1;
         $output = '';
-        $output .= "<tr>";
+        // $output .= "<tr>";
         $output .= "<td><input type='hidden' id='items_id' class='items_id' name='items_id[]' value='" . $item->id . "' /><input type='text' id='item_name' class='form-control item_name' value='" . $item->name . "' readonly/></td>";
         $output .= "<td><input type='number' id='quantity' class='form-control quantity' name='quantity[]' value='1' min='1' required/></td>";
         $output .= "<td><input type='number' id='rate' class='form-control rate' name='rate[]' min='1' value='" . $item->selling_price . "' required/></td>";
-        $output .= '<td><select id="tax" name="tax[]" class="form-control tax select2">';
+        $output .= '<td><select id="tax" name="tax[]" class="form-control select2 selecttax">';
+        $calculatedtax = 0;
+        $taxname = '';
+        $taxid = '';
+
         foreach ($tax as $row) {
-            $output .= "<option>Choose</option>";
+            if ($row->id == $item->tax_id) {
+                $taxid = Str::random(9);
+                $rowid = "taxrow" . $taxid;
+                $taxname = $row->name . " [" . $row->rate . "]";
+                $calculatedtax = $amount * ($row->rate / 100);
+                $taxrate = $row->rate;
+            }
             $output .= "<option value='" . $row->id . "'";
             if ($row->id == $item->tax_id) {$output .= 'selected';}
             $output .= ">" . $row->name . " [" . $row->rate . "]" . "</option>";
         }
-        $output .= "</select></td>";
+        $output .= "</select>";
+        $output .= "<input type='hidden' class='form-control taxvalue'  value='" . $taxrate . "' readonly /><input type='hidden' class='form-control taxid'  value='" . $taxid . "' readonly /></td>";
         $output .= "<td><input type='text' id='amount' class='form-control inputamount' name='amount[]' value='" . $amount . "' readonly /></td>";
         $output .= '<td style="display:flex"><button type="button" class="btn btn-primary btn-sm m-1" id="addnewitem"><i class="fa fa-plus"></i></button>';
         $output .= '<button type="button" class="btn btn-danger btn-sm m-1" id="removenewitem"><i class="fa fa-minus"></i></button></td>';
-        $output .= "</tr>";
-        echo $output;
+        // $output .= "</tr>";
+        $taxoutput = "";
+        $taxoutput .= "<div class='form-row' id='" . $rowid . "'>";
+        $taxoutput .= "<div class='form-group col-md-8'>";
+        $taxoutput .= "<h5> " . $taxname . " </h5></div>";
+        $taxoutput .= "<div class='form-group col-md-4 text-right'>";
+        $taxoutput .= "<h4> " . $calculatedtax . " </h4><input type='hidden' class='form-control calculatedtax'  value='" . $calculatedtax . "' readonly /></div>";
+        $response = [
+            'htmloutput' => $output,
+            'taxoutput' => $taxoutput,
+        ];
+        return response()->json($response);
         // return response()->json($item);
     }
 
@@ -76,26 +98,17 @@ class QuoteController extends Controller
         DB::beginTransaction();
 
         $images = null;
-        if (!empty($request->file('image'))) {
-            $images = [];
-            foreach ($request->file('image') as $image) {
-                $fileName = uniqid() . '.' . $image->extension();
-                $image->move(public_path('uploads/item'), $fileName);
-                array_push($images, $fileName);
-            }
-            $images = implode(",", $images);
-        }
 
-        $tax = null;
-        if (!empty($request->tax_id)) {
-            $tax = explode("|", $request->tax_id)[0];
-        }
+        // $tax = null;
+        // if (!empty($request->tax_id)) {
+        //     $tax = explode("|", $request->tax_id)[0];
+        // }
 
         $quote = new Quote();
         $quote->business_id = Auth::user()->business->id;
         $quote->sales_person_id = $request->sales_person_id;
         $quote->customer_id = $request->customer_id;
-        $quote->tax_id = $tax;
+        // $quote->tax_id = $tax;
         $quote->quote_number = $request->quote_number;
         $quote->reference_number = $request->reference_number;
         $quote->quote_date = $request->quote_date;
@@ -112,6 +125,12 @@ class QuoteController extends Controller
         $quote->adjustment_value = $request->adjustment_name_value;
         $quote->total_amount = $request->total_amount;
         $quoteresponse = $quote->save();
+
+        if ($images = $request->file('image')) {
+            foreach ($images as $image) {
+                $quote->addMedia($image)->toMediaCollection('quotes');
+            }
+        }
 
         if ($request->items_id[0] != null) {
             for ($i = 0; $i < count($request->items_id); $i++) {
@@ -160,12 +179,13 @@ class QuoteController extends Controller
 
     public function edit($id)
     {
+
         $customer = Customer::where('business_id', Auth::user()->business->id)->get();
         $salesperson = SalesPerson::where('business_id', Auth::user()->business->id)->get();
         $allitem = Item::where('business_id', Auth::user()->business->id)->get();
         $tax = Tax::where('business_id', Auth::user()->business->id)->get();
         $quote = Quote::findorFail($id);
-        $itemquote = QuoteItem::select('*', 'quote_items.id AS quoteid', 'items.id AS itemsid')->join('items', 'items.id', '=', 'quote_items.tax_id')->where('quote_id', $id)->get();
+        $itemquote = QuoteItem::select('*', 'quote_items.id AS quoteid', 'items.id AS itemsid', 'items.name AS itemsname', 'quote_items.tax_id AS taxid')->join('items', 'items.id', '=', 'quote_items.item_id')->where('quote_id', $id)->get();
         return view('user.quote.edit', [
             'customer' => $customer,
             'salesperson' => $salesperson,
@@ -186,28 +206,17 @@ class QuoteController extends Controller
 
         DB::beginTransaction();
         $images = null;
-        if (!empty($request->file('image'))) {
-            $images = [];
-            foreach ($request->file('image') as $image) {
-                $fileName = uniqid() . '.' . $image->extension();
-                $image->move(public_path('uploads/item'), $fileName);
-                array_push($images, $fileName);
-            }
-            $images = implode(",", $images);
-        } else {
-            $images = $request->imageShow;
-        }
 
-        $tax = null;
-        if (!empty($request->tax_id)) {
-            $tax = explode("|", $request->tax_id)[0];
-        }
+        // $tax = null;
+        // if (!empty($request->tax_id)) {
+        //     $tax = explode("|", $request->tax_id)[0];
+        // }
 
         $quote = Quote::find($id);
         $quote->business_id = Auth::user()->business->id;
         $quote->sales_person_id = $request->sales_person_id;
         $quote->customer_id = $request->customer_id;
-        $quote->tax_id = $tax;
+        // $quote->tax_id = $tax;
         $quote->quote_number = $request->quote_number;
         $quote->reference_number = $request->reference_number;
         $quote->quote_date = $request->quote_date;
@@ -224,6 +233,13 @@ class QuoteController extends Controller
         $quote->adjustment_value = $request->adjustment_name_value;
         $quote->total_amount = $request->total_amount;
         $quoteresponse = $quote->save();
+
+        if ($images = $request->file('image')) {
+            $quote->clearMediaCollection('image');
+            foreach ($images as $image) {
+                $quote->addMedia($image)->toMediaCollection('quotes');
+            }
+        }
 
         if ($request->items_id[0] != null) {
             QuoteItem::where('quote_id', $id)->delete();
@@ -416,16 +432,16 @@ class QuoteController extends Controller
             'name' => 'required',
             // 'unit_id' => 'required',
             'selling_price' => 'required',
-            'account_type_id' => 'required',
-            'tax_id' => 'required',
+            'model_account_type_id' => 'required',
+            'model_tax_id' => 'required',
         ]);
         $item = new Item();
         $item->business_id = Auth::guard('web')->user()->business->id;
         $item->name = $request->name;
-        $item->unit_id = $request->unit_id;
+        $item->unit_id = $request->model_unit_id;
         $item->selling_price = $request->selling_price;
-        $item->account_type_id = $request->account_type_id;
-        $item->tax_id = $request->tax_id;
+        $item->account_type_id = $request->model_account_type_id;
+        $item->tax_id = $request->model_tax_id;
         $item->description = $request->description;
         $item->is_service = $request->is_service;
 
@@ -434,5 +450,24 @@ class QuoteController extends Controller
         } else {
             return response()->json(['type' => 0, 'msg' => 'Something went wrong']);
         }
+    }
+
+    public function insertTax(Request $request)
+    {
+        $this->validate($request, [
+            'name' => 'required',
+            'rate' => 'required',
+        ]);
+        $tax = new Tax;
+        $tax->business_id = Auth::guard('web')->user()->business->id;
+        $tax->name = $request->name;
+        $tax->rate = $request->rate;
+        $tax->is_compound = (!empty($request->iscompound)) ? $request->iscompound : 0;
+        if ($tax->save()) {
+            return response()->json(['type' => 1, 'data' => Tax::select(DB::raw('CONCAT(name," [",rate,"]") AS text'), 'id')->where("business_id", Auth::guard('web')->user()->business->id)->get()]);
+        } else {
+            return response()->json(['type' => 0, 'msg' => 'Something went wrong']);
+        }
+
     }
 }

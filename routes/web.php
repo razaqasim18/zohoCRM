@@ -66,6 +66,7 @@ Route::middleware(['auth:web', 'verified', 'isblocked'])->group(function () {
 
     });
 
+    // quote
     Route::prefix('/quote')->name('quote.')->group(function () {
         Route::get('/', [App\Http\Controllers\QuoteController::class, 'index'])->name('list');
         Route::get('/add', [App\Http\Controllers\QuoteController::class, 'add'])->name('add');
@@ -81,9 +82,10 @@ Route::middleware(['auth:web', 'verified', 'isblocked'])->group(function () {
         Route::post('/customer/insert/ajax', [App\Http\Controllers\QuoteController::class, 'insertCustomer'])->name('customer.ajax.insert');
         Route::post('/saleperson/insert/ajax', [App\Http\Controllers\QuoteController::class, 'insertSaleperson'])->name('saleperson.ajax.insert');
         Route::post('/item/insert/ajax', [App\Http\Controllers\QuoteController::class, 'insertItem'])->name('item.ajax.insert');
-
+        Route::post('/tax/insert/ajax', [App\Http\Controllers\QuoteController::class, 'insertTax'])->name('tax.ajax.insert');
     });
 
+    // tax
     Route::prefix('/tax')->name('tax.')->group(function () {
         Route::get('/', [App\Http\Controllers\SettingController::class, 'listTax'])->name('list');
         Route::get('/add', [App\Http\Controllers\SettingController::class, 'addTax'])->name('add');
@@ -92,6 +94,63 @@ Route::middleware(['auth:web', 'verified', 'isblocked'])->group(function () {
         Route::put('/update/{id}', [App\Http\Controllers\SettingController::class, 'updateTax'])->name('update');
         Route::delete('/delete/{id}', [App\Http\Controllers\SettingController::class, 'deleteTax'])->name('delete');
     });
+
+    // vendors
+    Route::prefix('/vendors')->name('vendor.')->group(function () {
+        Route::get('/', function () {
+            return view('user.vendor.list');
+        })->name('list');
+        Route::get('/add', function () {
+            return view('user.vendor.add');
+        })->name('add');
+    });
+
+    // expenses
+    Route::prefix('/expense')->name('expense.')->group(function () {
+        Route::get('/', function () {
+            return view('user.expense.list');
+        })->name('list');
+        Route::get('/add', function () {
+            return view('user.expense.add');
+        })->name('add');
+    });
+
+    // invoice
+    Route::prefix('/invoice')->name('invoice.')->group(function () {
+        Route::get('/', function () {
+            return view('user.invoice.list');
+        })->name('list');
+        Route::get('/add', function () {
+            return view('user.invoice.add');
+        })->name('add');
+        // Route::get('/add', [App\Http\Controllers\InvoiceController::class, 'add'])->name('add');
+        Route::post('/insert', [App\Http\Controllers\InvoiceController::class, 'insert'])->name('insert');
+        Route::get('/item/detail/{id}', [App\Http\Controllers\InvoiceController::class, 'getItemDetail'])->name('item.detail');
+        Route::delete('/delete/{id}', [App\Http\Controllers\InvoiceController::class, 'delete'])->name('delete');
+        Route::delete('/item/delete/{id}', [App\Http\Controllers\InvoiceController::class, 'itemDelete'])->name('item.delete');
+        Route::get('/edit/{id}', [App\Http\Controllers\InvoiceController::class, 'edit'])->name('edit');
+        Route::put('/update/{id}', [App\Http\Controllers\InvoiceController::class, 'update'])->name('update');
+        Route::get('/clone/{id}', [App\Http\Controllers\InvoiceController::class, 'cloned'])->name('clone');
+
+        // ajax
+        Route::post('/customer/insert/ajax', [App\Http\Controllers\InvoiceController::class, 'insertCustomer'])->name('customer.ajax.insert');
+        Route::post('/saleperson/insert/ajax', [App\Http\Controllers\InvoiceController::class, 'insertSaleperson'])->name('saleperson.ajax.insert');
+        Route::post('/item/insert/ajax', [App\Http\Controllers\InvoiceController::class, 'insertItem'])->name('item.ajax.insert');
+    });
+
+    // new
+    Route::get('/creditnotes/add', function () {
+        return view('user.creditnotes.add');
+    })->name('creditnotes.add');
+    Route::get('/creditnotes/edit', function () {
+        return view('user.creditnotes.add');
+    })->name('creditnotes.edit');
+    Route::get('/paymentReceived/add', function () {
+        return view('user.paymentReceived.add');
+    })->name('paymentReceived.add');
+    Route::get('/paymentReceived/edit', function () {
+        return view('user.paymentReceived.add');
+    })->name('paymentReceived.edit');
 
     Route::middleware(['isbusinessadmin'])->group(function () {
         //clients

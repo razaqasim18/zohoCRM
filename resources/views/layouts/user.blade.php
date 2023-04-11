@@ -108,8 +108,33 @@
                                     <a class="nav-link" href="{{ route('quote.list') }}">
                                         Estimate
                                     </a>
+                                    <a class="nav-link" href="{{ route('invoice.list') }}">
+                                        Invoices
+                                    </a>
+                                    <a class="nav-link" href="{{ route('creditnotes.add') }}">
+                                        Credit Notes
+                                    </a>
+                                    <a class="nav-link" href="{{ route('paymentReceived.add') }}">
+                                        Payment Received
+                                    </a>
                                 </li>
 
+                            </ul>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="menu-toggle nav-link has-dropdown">
+                                <i data-feather="shopping-bag"></i><span>Purchases</span></a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="nav-link" href="{{ route('vendor.list') }}">
+                                        Vendors
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link" href="{{ route('expense.list') }}">
+                                        Expenses
+                                    </a>
+                                </li>
                             </ul>
                         </li>
 
@@ -229,9 +254,7 @@
     <!-- General JS Scripts -->
     <script src="{{ asset('js/app.min.js') }}"></script>
     <script src="{{ asset('bundles/select2/dist/js/select2.full.min.js') }}"></script>
-    <!-- JS Libraies -->
     <script src="{{ asset('bundles/jquery-ui/jquery-ui.min.js') }}"></script>
-    @yield('script')
     <!-- Template JS File -->
     <script src="{{ asset('bundles/sweetalert/sweetalert.min.js') }}"></script>
     <script src="{{ asset('js/page/sweetalert.js') }}"></script>
@@ -240,6 +263,9 @@
     <script src="{{ asset('js/scripts.js') }}"></script>
     <!-- Custom JS File -->
     <script src="{{ asset('js/custom.js') }}"></script>
+    {{-- custom pages js --}}
+    @yield('script')
+
 </body>
 
 

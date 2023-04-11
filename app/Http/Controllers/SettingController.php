@@ -10,7 +10,7 @@ class SettingController extends Controller
 {
     public function listTax()
     {
-        return view('user.tax.list', ['tax' => Tax::where('business_id', Auth::user()->business->id)->get()]);
+        return view('user.tax.list', ['tax' => Tax::where('business_id', Auth::guard('web')->user()->business->id)->get()]);
     }
 
     public function addTax()
@@ -25,7 +25,7 @@ class SettingController extends Controller
             'rate' => 'required',
         ]);
         $response = Tax::insert([
-            'business_id' => Auth::user()->business->id,
+            'business_id' => Auth::guard('web')->user()->business->id,
             'name' => $request->name,
             'rate' => $request->rate,
             'is_compound' => (!empty($request->iscompound)) ? $request->iscompound : 0,
@@ -50,7 +50,7 @@ class SettingController extends Controller
             'rate' => 'required',
         ]);
         $tax = Tax::find($id);
-        $tax->business_id = Auth::user()->business->id;
+        $tax->business_id = Auth::guard('web')->user()->business->id;
         $tax->name = $request->name;
         $tax->rate = $request->rate;
         $tax->is_compound = (!empty($request->iscompound)) ? $request->iscompound : 0;

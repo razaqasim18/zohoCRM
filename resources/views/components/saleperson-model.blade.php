@@ -5,7 +5,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="myLargeModalLabel">Add Sale Person</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" onclick="closeSalePerson()" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -39,6 +39,7 @@
 <script>
     function closeSalePerson() {
         $("#salepersonModel").modal('hide');
+        $("#salepersonModelForm")[0].reset()
     }
 
     function submitSalePerson() {
@@ -70,7 +71,7 @@
                         $.each(response.errors, function(key, value) {
                             $('#salepersonerror').append('<div class="alert alert-danger">' +
                                 value + '</div>');
-                            });
+                        });
                     } else {
                         let msg = response.msg;
                         iziToast.error({
