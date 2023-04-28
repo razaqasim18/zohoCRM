@@ -99,6 +99,48 @@
                         </li>
                         <li class="dropdown">
                             <a href="#" class="menu-toggle nav-link has-dropdown">
+                                <i data-feather="shopping-bag"></i><span>Purchases</span></a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="nav-link" href="{{ route('vendor.list') }}">
+                                        Vendors
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link" href="{{ route('expense.list') }}">
+                                        Expenses
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link" href="{{ route('bill.list') }}">
+                                        Bills
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link" href="{{ route('vendorCredits.list') }}">
+                                        Vendor Credits
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="menu-toggle nav-link has-dropdown">
+                                <i data-feather="clock"></i><span>Time Tracking</span></a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="nav-link" href="{{ route('project.list') }}">
+                                        Projects
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link" href="{{ route('timesheet.list') }}">
+                                        Timesheet
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="menu-toggle nav-link has-dropdown">
                                 <i data-feather="shopping-cart"></i><span>Sales</span></a>
                             <ul class="dropdown-menu">
                                 <li>
@@ -114,7 +156,7 @@
                                     <a class="nav-link" href="{{ route('creditnotes.add') }}">
                                         Credit Notes
                                     </a>
-                                    <a class="nav-link" href="{{ route('paymentReceived.add') }}">
+                                    <a class="nav-link" href="{{ route('payment.received.add') }}">
                                         Payment Received
                                     </a>
                                 </li>

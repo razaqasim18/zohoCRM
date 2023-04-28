@@ -30,7 +30,7 @@ Route::get('/', function () {
 
 Auth::routes(['verify' => true]);
 
-Route::post('/register/second', [App\Http\Controllers\Auth\RegisterController::class, 'showRegistrationSecondForm'])->name('register.second');
+Route::any('/register/second', [App\Http\Controllers\Auth\RegisterController::class, 'showRegistrationSecondForm'])->name('register.second');
 Route::any('/register/final', [App\Http\Controllers\Auth\RegisterController::class, 'register'])->name('register.final');
 
 Route::middleware(['auth:web', 'verified', 'isblocked'])->group(function () {
@@ -115,6 +115,46 @@ Route::middleware(['auth:web', 'verified', 'isblocked'])->group(function () {
         })->name('add');
     });
 
+    //bill
+    Route::prefix('/bill')->name('bill.')->group(function () {
+        Route::get('/', function () {
+            return view('user.bill.list');
+        })->name('list');
+        Route::get('/add', function () {
+            return view('user.bill.add');
+        })->name('add');
+    });
+
+    //vendourcreade
+    Route::prefix('/vendorCredits')->name('vendorCredits.')->group(function () {
+        Route::get('/', function () {
+            return view('user.vendorCredits.list');
+        })->name('list');
+        Route::get('/add', function () {
+            return view('user.vendorCredits.add');
+        })->name('add');
+    });
+
+    //project
+    Route::prefix('/project')->name('project.')->group(function () {
+        Route::get('/', function () {
+            return view('user.project.list');
+        })->name('list');
+        Route::get('/add', function () {
+            return view('user.project.add');
+        })->name('add');
+    });
+
+    // timesheet
+    Route::prefix('/timesheet')->name('timesheet.')->group(function () {
+        Route::get('/', function () {
+            return view('user.timesheet.list');
+        })->name('list');
+        Route::get('/add', function () {
+            return view('user.timesheet.add');
+        })->name('add');
+    });
+
     // invoice
     Route::prefix('/invoice')->name('invoice.')->group(function () {
         Route::get('/', function () {
@@ -138,19 +178,24 @@ Route::middleware(['auth:web', 'verified', 'isblocked'])->group(function () {
         Route::post('/item/insert/ajax', [App\Http\Controllers\InvoiceController::class, 'insertItem'])->name('item.ajax.insert');
     });
 
-    // new
-    Route::get('/creditnotes/add', function () {
-        return view('user.creditnotes.add');
-    })->name('creditnotes.add');
-    Route::get('/creditnotes/edit', function () {
-        return view('user.creditnotes.add');
-    })->name('creditnotes.edit');
-    Route::get('/paymentReceived/add', function () {
-        return view('user.paymentReceived.add');
-    })->name('paymentReceived.add');
-    Route::get('/paymentReceived/edit', function () {
-        return view('user.paymentReceived.add');
-    })->name('paymentReceived.edit');
+    // creditnotes
+    Route::prefix('/creditnotes')->name('creditnotes.')->group(function () {
+        Route::get('/add', function () {
+            return view('user.creditnotes.add');
+        })->name('add');
+        Route::get('/edit', function () {
+            return view('user.creditnotes.add');
+        })->name('edit');
+    });
+
+    Route::prefix('/payment/received')->name('payment.received.')->group(function () {
+        Route::get('/add', function () {
+            return view('user.paymentreceived.add');
+        })->name('add');
+        Route::get('/edit', function () {
+            return view('user.paymentreceived.add');
+        })->name('edit');
+    });
 
     Route::middleware(['isbusinessadmin'])->group(function () {
         //clients

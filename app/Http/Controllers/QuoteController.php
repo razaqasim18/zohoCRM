@@ -393,7 +393,7 @@ class QuoteController extends Controller
 
         if ($customer && $customerDetail && $billingaddress && $shippingaddress) {
             DB::commit();
-            return response()->json(['type' => 1, 'data' => Customer::select('id', 'first_name AS text')->where("business_id", Auth::guard('web')->user()->business->id)->get()]);
+            return response()->json(['type' => 1, 'data' => Customer::select('id', 'display_name AS text')->where("business_id", Auth::guard('web')->user()->business->id)->get()]);
         } else {
             DB::rollback();
             return response()->json(['type' => 0, 'msg' => 'Something went wrong']);
